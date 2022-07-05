@@ -1,0 +1,36 @@
+@charset 'utf-8';
+
+html {
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 14px;
+}
+
+body {
+  overflow-x: hidden;
+  color: rgb(29, 29, 31);
+  letter-spacing: -0.05em;
+  background: white;
+}
+
+p {
+  line-height: 1.6;
+}
+
+/* ------------------------------------------------- */
+/* Navigation Bar */
+
+.global-nav {
+  height: 44px;
+}
+
+.global-nav-links {
+  max-width: 1000px;
+  /* 부모요소인 global-nav와 같은 높이를 가질 수 있도록 */
+  /* 원래는 글자크기만큼의 높이를 가지고있음 */
+  height: 100%;
+  /* 센터 정렬을 하기 위해 */
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
