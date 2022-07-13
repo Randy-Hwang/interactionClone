@@ -89,6 +89,8 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  top: 35vh;
+
   height: 3em;
   font-size: 6vw;
   opacity: 0;
@@ -123,6 +125,16 @@ a {
 
 #scroll-section-2 .main-message {
   font-size: 10vw;
+}
+
+#scroll-section-2 .second {
+  top: 10%;
+  left: 40%;
+}
+
+#scroll-section-2 .third {
+  top: 15%;
+  left: 45%;
 }
 
 .pin {
@@ -165,7 +177,6 @@ a {
 .sticky-elem {
   display: none;
   position: fixed;
-  top: 0;
   left: 0;
   width: 100%;
 }
