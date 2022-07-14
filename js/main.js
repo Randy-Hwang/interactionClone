@@ -25,8 +25,15 @@
         messageFourth: document.querySelector(
           "#scroll-section-0 .main-message.fourth"
         ),
+        canvas: document.querySelector("#video-canvas-0"),
+        context: document.querySelector("#video-canvas-0").getContext("2d"),
+        videoImages: [],
       },
       values: {
+        videoImageCount: 300,
+        imageSequence: [0, 299],
+        canvas_opacity: [1, 0, { start: 0.9, end: 1 }],
+
         // y축의 경우에는 값이 음수가 돼야 우리 눈에서는 요소가 위로 올라가는 것 처럼 보인다.
         messageFirstOpacity_in: [0, 1, { start: 0.1, end: 0.2 }],
         messageSecondOpacity_in: [0, 1, { start: 0.3, end: 0.4 }],
@@ -70,8 +77,16 @@
         messageThird: document.querySelector("#scroll-section-2 .third"),
         pinSecond: document.querySelector("#scroll-section-2 .second .pin"),
         pinThird: document.querySelector("#scroll-section-2 .third .pin"),
+        canvas: document.querySelector("#video-canvas-1"),
+        context: document.querySelector("#video-canvas-1").getContext("2d"),
+        videoImages: [],
       },
       values: {
+        videoImageCount: 960,
+        imageSequence: [0, 959],
+        canvas_opacity_in: [0, 1, { start: 0, end: 0.1 }],
+        canvas_opacity_out: [1, 0, { start: 0.95, end: 1 }],
+
         // y축의 경우에는 값이 음수가 돼야 우리 눈에서는 요소가 위로 올라가는 것 처럼 보인다.
         messageFirstTranslateY_in: [20, 0, { start: 0.15, end: 0.2 }],
         messageSecondTranslateY_in: [30, 0, { start: 0.5, end: 0.55 }],
@@ -112,6 +127,23 @@
     },
   ];
 
+  const setCanvasImages = () => {
+    let imgElem;
+    for (let i = 0; i < sceneInfo[0].values.videoImageCount; i++) {
+      imgElem = new Image(); // = document.createElement("img");
+      imgElem.src = `./sourceCode/video/001/IMG_${6726 + i}.JPG`;
+      sceneInfo[0].objs.videoImages.push(imgElem);
+    }
+
+    let imgElem2;
+    for (let i = 0; i < sceneInfo[2].values.videoImageCount; i++) {
+      imgElem2 = new Image();
+      imgElem2.src = `./sourceCode/video/002/IMG_${7027 + i}.JPG`;
+      sceneInfo[2].objs.videoImages.push(imgElem2);
+    }
+  };
+  setCanvasImages();
+
   const setLayout = () => {
     // 각 스크롤 섹션의 높이 세팅
     for (let i = 0; i < sceneInfo.length; i++) {
@@ -136,6 +168,10 @@
       }
     }
     document.body.setAttribute("id", `show-scene-${currentScene}`);
+
+    const heightRatio = window.innerHeight / 1080;
+    sceneInfo[0].objs.canvas.style.transform = `translate3d(-50%, -50%, 0) scale(${heightRatio})`;
+    sceneInfo[2].objs.canvas.style.transform = `translate3d(-50%, -50%, 0) scale(${heightRatio})`;
   };
 
   const calcValues = (values, currentYOffset) => {
@@ -178,6 +214,15 @@
 
     switch (currentScene) {
       case 0:
+        let sequence = Math.round(
+          calcValues(values.imageSequence, currentYOffset)
+        );
+        objs.context.drawImage(objs.videoImages[sequence], 0, 0);
+        objs.canvas.style.opacity = calcValues(
+          values.canvas_opacity,
+          currentYOffset
+        );
+
         // First
         if (scrollRatio <= 0.21) {
           // in
@@ -272,6 +317,25 @@
         break;
 
       case 2:
+        let sequence2 = Math.round(
+          calcValues(values.imageSequence, currentYOffset)
+        );
+        objs.context.drawImage(objs.videoImages[sequence2], 0, 0);
+
+        if (scrollRatio <= 0.5) {
+          //in
+          objs.canvas.style.opacity = calcValues(
+            values.canvas_opacity_in,
+            currentYOffset
+          );
+        } else {
+          //out
+          objs.canvas.style.opacity = calcValues(
+            values.canvas_opacity_out,
+            currentYOffset
+          );
+        }
+
         if (scrollRatio <= 0.25) {
           // in
           objs.messageFirst.style.opacity = calcValues(
@@ -386,7 +450,10 @@
   };
 
   addEventListener("resize", setLayout);
-  addEventListener("load", setLayout);
+  addEventListener("load", () => {
+    setLayout();
+    sceneInfo[0].objs.context.drawImage(sceneInfo[0].objs.videoImages[0], 0, 0);
+  });
   addEventListener("scroll", () => {
     yOffset = scrollY;
     scrollLoop();
