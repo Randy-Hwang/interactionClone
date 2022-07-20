@@ -79,6 +79,7 @@ a {
 /* Main Section  - Location */
 
 .scroll-section {
+  position: relative;
   padding-top: 50vh;
 }
 
@@ -214,4 +215,10 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.image-blend-canvas.sticky {
+  position: fixed;
+  /* scale로 인해 줄어들기 전 top값을 기준으로 잡기때문에 top:0을 하면 화면 아래쪽에 고정됨 */
+  top: 0;
 }

@@ -133,6 +133,8 @@
       values: {
         rect1X: [0, 0, { start: 0, end: 0 }],
         rect2X: [0, 0, { start: 0, end: 0 }],
+        blendHeight: [0, 0, { start: 0, end: 0 }],
+        canvas_scale: [0, 0, { start: 0, end: 0 }],
         rectStartY: 0,
       },
     },
@@ -437,6 +439,49 @@
             currentYOffset
           )})`;
         }
+
+        // currentScene이 3번일때의 그림을 미리 그려주자
+        if (scrollRatio > 0.9) {
+          const objs = sceneInfo[3].objs;
+          const values = sceneInfo[3].values;
+          const widthRatio = window.innerWidth / objs.canvas.width;
+          const heightRatio = window.innerHeight / objs.canvas.height;
+          let canvasScaleRatio;
+
+          if (widthRatio <= heightRatio) {
+            canvasScaleRatio = heightRatio;
+          } else {
+            canvasScaleRatio = widthRatio;
+          }
+          objs.canvas.style.transform = `scale(${canvasScaleRatio})`;
+          objs.context.fillStyle = `white`;
+          objs.context.drawImage(objs.images[0], 0, 0);
+
+          const reCalculatedInnerWidth =
+            document.body.offsetWidth / canvasScaleRatio;
+          const reCalculatedInnerHeight = window.innerHeight / canvasScaleRatio;
+
+          const whiteRectWidth = reCalculatedInnerWidth * 0.15;
+          values.rect1X[0] = (objs.canvas.width - reCalculatedInnerWidth) / 2;
+          values.rect1X[1] = values.rect1X[0] - whiteRectWidth;
+          values.rect2X[0] =
+            values.rect1X[0] + reCalculatedInnerWidth - whiteRectWidth;
+          values.rect2X[1] = values.rect2X[0] + whiteRectWidth;
+
+          objs.context.fillRect(
+            parseInt(values.rect1X[0]),
+            0,
+            parseInt(whiteRectWidth),
+            objs.canvas.height
+          );
+          objs.context.fillRect(
+            parseInt(values.rect2X[0]),
+            0,
+            parseInt(whiteRectWidth),
+            objs.canvas.height
+          );
+        }
+
         break;
 
       // 3
@@ -446,6 +491,8 @@
         const heightRatio = window.innerHeight / objs.canvas.height;
         let canvasScaleRatio;
 
+        let step = 0;
+
         if (widthRatio <= heightRatio) {
           // 캔버스보다 브라우저 창이 홀쭉한 경우
           canvasScaleRatio = heightRatio;
@@ -454,6 +501,7 @@
           canvasScaleRatio = widthRatio;
         }
         objs.canvas.style.transform = `scale(${canvasScaleRatio})`;
+        objs.context.fillStyle = `white`;
         objs.context.drawImage(objs.images[0], 0, 0);
 
         // 캔버스 자체를 조작하는게 아니라, 캔버스 위에 흰 블럭을 세워서 조작하는 것.
@@ -465,7 +513,23 @@
 
         // 값이 0일때만 실행, 한번 정해지고나면 다시 값을 정할 필요가 없을 때
         if (!values.rectStartY) {
-          values.rectStartY = objs.canvas.getBoundingClientRect().top;
+          // getBoundingClientRect() => 이 함수가 실행될 때 다양한 위치를 보여준다.
+          // 다만 사용자의 스크롤 속도에 따라 값이 달라질 수 있음
+          // values.rectStartY = objs.canvas.getBoundingClientRect().top;
+
+          // offsetTop => 페이지의 맨 위에서부터의 위치기때문에 스크롤 속도에 따라 값이 달라질 일이 없음
+          // scale로 캔버스의 크기를 줄였으나, offsetTop은 줄어들기 전 캔버스의 크기를 기준으로 삼음
+          // 따라서 조정 필요. (원래 캔버스 높이 - 줄어든 캔버스 높이) / 2 의 값을 더해주어야 함
+          values.rectStartY =
+            objs.canvas.offsetTop +
+            (objs.canvas.height - objs.canvas.height * canvasScaleRatio) / 2;
+
+          // 단순 반복계산이 많음. 어떻게 해결해야 할까?
+          // 웹페이지의 중간쯤부터 애니메이션이 시작될 수 있도록
+          values.rect1X[2].start = window.innerHeight / 2 / scrollHeight;
+          values.rect2X[2].start = window.innerHeight / 2 / scrollHeight;
+
+          // 끝나는 지점 정하기
           values.rect1X[2].end = values.rectStartY / scrollHeight;
           values.rect2X[2].end = values.rectStartY / scrollHeight;
         }
@@ -493,6 +557,59 @@
           parseInt(whiteRectWidth),
           objs.canvas.height
         );
+
+        // 캔버스가 브라우저 상단에 닿지 않았다면, step = 1;
+        // 그게 아니라면 step = 2;
+        if (scrollRatio < values.rect1X[2].end) {
+          step = 1;
+          objs.canvas.classList.remove(`sticky`);
+        } else {
+          // 이미지 블렌드 실행
+          step = 2;
+          values.blendHeight[0] = 0;
+          values.blendHeight[1] = objs.canvas.height;
+          // values.rect1X[2].end => 회색 사각형 애니메이션이 끝난 순간
+          values.blendHeight[2].start = values.rect1X[2].end;
+          values.blendHeight[2].end = values.blendHeight[2].start + 0.2;
+          const blendHeight = calcValues(values.blendHeight, currentYOffset);
+
+          // drawImage(image/video/canvas
+          // 소스이미지의 x좌표, 소스이미지의 y좌표, 소스이미지의 width, 소스이미지의 height,
+          // 그리는이미지의 x좌표, 그리는이미지의 y좌표, 그리는이미지의 width, 그리는이미지의 height)
+          objs.context.drawImage(
+            // 소스이미지
+            objs.images[1],
+            0,
+            objs.canvas.height - blendHeight,
+            objs.canvas.width,
+            blendHeight,
+            // 캔버스에 그릴 이미지. 두 이미지의 크기가 1920x1080으로 같으므로 조정해줄 필요 x
+            0,
+            objs.canvas.height - blendHeight,
+            objs.canvas.width,
+            blendHeight
+          );
+
+          objs.canvas.classList.add(`sticky`);
+          objs.canvas.style.top = `${
+            -(objs.canvas.height - objs.canvas.height * canvasScaleRatio) / 2
+          }px`;
+
+          if (scrollRatio > values.blendHeight[2].end) {
+            values.canvas_scale[0] = canvasScaleRatio;
+            values.canvas_scale[1] =
+              document.body.offsetWidth / (1.5 * objs.canvas.width);
+            values.canvas_scale[2].start = values.blendHeight[2].end;
+            // 애니메이션 시작 후 전체 스크롤의 20% 정도를 애니메이션 구간으로 할당
+            values.canvas_scale[2].end = values.canvas_scale[2].start + 0.2;
+
+            objs.canvas.style.transform = `scale(${calcValues(
+              values.canvas_scale,
+              currentYOffset
+            )})`;
+          }
+        }
+
         break;
     }
   };
