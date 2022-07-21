@@ -43,6 +43,14 @@ a {
   border-bottom: 1px solid #ddd;
 }
 
+.local-nav-sticky .local-nav {
+  position: fixed;
+  top: 0;
+  background: rgba(255, 255, 255, 0.1);
+  /* 뒷부분에 블러 처리를 주고싶을 때 */
+  backdrop-filter: saturate(180%) blur(15px);
+}
+
 .global-nav,
 .local-nav {
   padding: 0 1rem;
@@ -150,10 +158,10 @@ a {
 }
 
 .mid-message {
-  max-width: 1000px;
+  width: 1000px;
   margin: 0 auto;
   padding: 0 1rem;
-  font-size: 6vw;
+  font-size: 5vw;
   color: #888;
 }
 
@@ -163,9 +171,9 @@ a {
 
 .canvas-caption {
   max-width: 1000px;
-  margin: 0 auto;
+  margin: -1em auto 0;
   padding: 0 1rem;
-  font-size: 3vw;
+  font-size: 2rem;
   color: #888;
 }
 
