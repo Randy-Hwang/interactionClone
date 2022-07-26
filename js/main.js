@@ -4,6 +4,11 @@
   let currentScene = 0; // 현재 활성화된 씬(scroll-section)
   let enterNewScene = false; // 새로운 scene으로 들어갔을 때 opacity의 오작동을 방지하기 위함
 
+  let acc = 0.1; // 부드러운 애니메이션을 위한 감속지표
+  let delayedYOffset = 0;
+  let rafId; // request animation frame id
+  let rafState;
+
   const sceneInfo = [
     {
       // 스크롤 높이가 길수록 애니메이션 속도가 느리다.
@@ -164,7 +169,6 @@
       sceneInfo[3].objs.images.push(imgElem3);
     }
   };
-  setCanvasImages();
 
   const checkMenu = () => {
     if (yOffset > 44) {
@@ -245,10 +249,10 @@
     switch (currentScene) {
       // 0
       case 0:
-        let sequence = Math.round(
-          calcValues(values.imageSequence, currentYOffset)
-        );
-        objs.context.drawImage(objs.videoImages[sequence], 0, 0);
+        // let sequence = Math.round(
+        //   calcValues(values.imageSequence, currentYOffset)
+        // );
+        // objs.context.drawImage(objs.videoImages[sequence], 0, 0);
         objs.canvas.style.opacity = calcValues(
           values.canvas_opacity,
           currentYOffset
@@ -349,10 +353,10 @@
 
       // 2
       case 2:
-        let sequence2 = Math.round(
-          calcValues(values.imageSequence, currentYOffset)
-        );
-        objs.context.drawImage(objs.videoImages[sequence2], 0, 0);
+        // let sequence2 = Math.round(
+        //   calcValues(values.imageSequence, currentYOffset)
+        // );
+        // objs.context.drawImage(objs.videoImages[sequence2], 0, 0);
 
         if (scrollRatio <= 0.5) {
           //in
@@ -662,13 +666,16 @@
       prevScrollHeight += sceneInfo[i].scrollHeight;
     }
 
-    if (yOffset > prevScrollHeight + sceneInfo[currentScene].scrollHeight) {
+    if (
+      delayedYOffset >
+      prevScrollHeight + sceneInfo[currentScene].scrollHeight
+    ) {
       enterNewScene = true;
       currentScene++;
       document.body.setAttribute("id", `show-scene-${currentScene}`);
     }
 
-    if (yOffset < prevScrollHeight) {
+    if (delayedYOffset < prevScrollHeight) {
       enterNewScene = true;
       // 브라우저 바운스 효과로 인해 currentScene이 마이너스가 되는 현상 방지
       if (currentScene === 0) return;
@@ -681,16 +688,71 @@
     playAnimation();
   };
 
-  addEventListener("resize", setLayout);
+  function loop() {
+    // 인터랙션 부드러운 감속
+    // (목적지 - 출발지) * 감속단위 를 계산한 결과를 출발지에 더함
+    // 그 출발지를 스크롤에 적용
+    delayedYOffset = delayedYOffset + (yOffset - delayedYOffset) * acc;
+
+    if (!enterNewScene) {
+      if (currentScene === 0 || currentScene === 2) {
+        const currentYOffset = delayedYOffset - prevScrollHeight;
+        const values = sceneInfo[currentScene].values;
+        const objs = sceneInfo[currentScene].objs;
+
+        let sequence = Math.round(
+          calcValues(values.imageSequence, currentYOffset)
+        );
+        if (objs.videoImages[sequence]) {
+          objs.context.drawImage(objs.videoImages[sequence], 0, 0);
+        }
+      }
+    }
+
+    // 컴퓨터 사양에 따라 다르지만, 60프레임 (초당60번 갱신)을 목적으로 함수를 실행함
+    // 즉, 부드러운 감속을 1초에 60번동안 실행해서 부드럽게 만드는 것  (60프레임 기준)
+    rafId = requestAnimationFrame(loop);
+
+    // 스크롤이 멈춰있을땐 애니메이션 프레임 함수도 멈출 수 있도록
+    // 절댓값(위로 올리나 아래로 내리나 동일하게 적용하기 위해)이 1픽셀보다 작으면
+    // 애니메이션 프레임 취소
+    // cancelAnimationFrame 이라는 별도의 함수 존재
+    if (Math.abs(yOffset - delayedYOffset) < 1) {
+      cancelAnimationFrame(rafId);
+      rafState = false;
+    }
+  }
+
+  addEventListener("resize", () => {
+    if (window.innerWidth > 600) {
+      setLayout();
+    }
+    sceneInfo[3].values.rectStartY = 0;
+  });
+
+  // orientationchange => 모바일 기기의 세로방향, 가로방향을 바꿀 때마다 발생하는 이벤트
+  addEventListener("orientationchange", setLayout);
+
   addEventListener("load", () => {
+    document.body.classList.remove("before-load");
     setLayout();
     sceneInfo[0].objs.context.drawImage(sceneInfo[0].objs.videoImages[0], 0, 0);
   });
+
   addEventListener("scroll", () => {
     yOffset = scrollY;
     scrollLoop();
     checkMenu();
-  });
-})();
 
-// testß
+    if (!rafState) {
+      rafId = requestAnimationFrame(loop);
+      rafState = true;
+    }
+  });
+
+  document.querySelector(".loading").addEventListener("transitionend", (e) => {
+    document.body.removeChild(e.currentTarget);
+  });
+
+  setCanvasImages();
+})();

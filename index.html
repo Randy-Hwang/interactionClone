@@ -14,7 +14,14 @@
     <link rel="stylesheet" href="css/default.css" />
     <link rel="stylesheet" href="css/main.css" />
   </head>
-  <body>
+  <body class="before-load">
+    <div class="loading">
+      <!-- svg라고 로딩 애니메이션을 만드는 방법 -->
+      <svg class="loading-circle">
+        <!-- cx = 중심점의 x위치, y = y위치, r = 반지름 -->
+        <circle cx="50%" y="50%" r="25" />
+      </svg>
+    </div>
     <div class="container">
       <nav class="global-nav">
         <div class="global-nav-links">
