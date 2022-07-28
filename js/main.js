@@ -1,3 +1,5 @@
+// 버그수정1
+
 (() => {
   let yOffset = 0; // scrollY 값을 넣을 변수
   let prevScrollHeight = 0; // 현재 스크롤 위치 (yOffset)보다 이전에 위치한 스크롤 섹션 높이들의 합
@@ -723,35 +725,58 @@
     }
   }
 
-  addEventListener("resize", () => {
-    if (window.innerWidth > 600) {
-      setLayout();
-    }
-    sceneInfo[3].values.rectStartY = 0;
-  });
-
-  // orientationchange => 모바일 기기의 세로방향, 가로방향을 바꿀 때마다 발생하는 이벤트
-  addEventListener("orientationchange", setLayout);
-
   addEventListener("load", () => {
     document.body.classList.remove("before-load");
     setLayout();
     sceneInfo[0].objs.context.drawImage(sceneInfo[0].objs.videoImages[0], 0, 0);
-  });
 
-  addEventListener("scroll", () => {
-    yOffset = scrollY;
-    scrollLoop();
-    checkMenu();
+    let tempYOffset = yOffset;
+    let tempScrollCount = 0;
 
-    if (!rafState) {
-      rafId = requestAnimationFrame(loop);
-      rafState = true;
+    if (yOffset > 0) {
+      let siId = setInterval(() => {
+        // scrollTo(x, y) => 우리는 세로스크롤을 관리하고 있으므로 y부분만 건드리면 됨
+        // setTimeout과 같이 시간지연이 있어야 정상작동
+        // 페이지 중간에서 새로고침 시 버그가 발생하는 것을 수정하기 위함
+        scrollTo(0, tempYOffset);
+        tempYOffset += 1;
+
+        if (tempScrollCount > 5) {
+          // setinterval의 작동을 멈추는 함수 clearInterval
+          clearInterval(siId);
+        }
+        tempScrollCount++;
+      }, 20);
     }
-  });
 
-  document.querySelector(".loading").addEventListener("transitionend", (e) => {
-    document.body.removeChild(e.currentTarget);
+    addEventListener("scroll", () => {
+      yOffset = scrollY;
+      scrollLoop();
+      checkMenu();
+
+      if (!rafState) {
+        rafId = requestAnimationFrame(loop);
+        rafState = true;
+      }
+    });
+
+    addEventListener("resize", () => {
+      if (window.innerWidth > 900) {
+        setLayout();
+        sceneInfo[3].values.rectStartY = 0;
+      }
+    });
+
+    // orientationchange => 모바일 기기의 세로방향, 가로방향을 바꿀 때마다 발생하는 이벤트
+    addEventListener("orientationchange", () => {
+      setTimeout(setLayout, 500);
+    });
+
+    document
+      .querySelector(".loading")
+      .addEventListener("transitionend", (e) => {
+        document.body.removeChild(e.currentTarget);
+      });
   });
 
   setCanvasImages();
