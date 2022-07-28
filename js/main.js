@@ -669,11 +669,24 @@
     }
 
     if (
+      delayedYOffset <
+      prevScrollHeight + sceneInfo[currentScene].scrollHeight
+    ) {
+      document.body.classList.remove(`scroll-effect-end`);
+    }
+
+    if (
       delayedYOffset >
       prevScrollHeight + sceneInfo[currentScene].scrollHeight
     ) {
       enterNewScene = true;
-      currentScene++;
+      // 하단에 요소를 추가할 때, currentScene에 접근할 수 없어 에러가 나는 것을 방지하기 위함
+      if (currentScene === sceneInfo.length - 1) {
+        document.body.classList.add(`scroll-effect-end`);
+      }
+      if (currentScene < sceneInfo.length - 1) {
+        currentScene++;
+      }
       document.body.setAttribute("id", `show-scene-${currentScene}`);
     }
 
@@ -762,14 +775,16 @@
 
     addEventListener("resize", () => {
       if (window.innerWidth > 900) {
-        setLayout();
-        sceneInfo[3].values.rectStartY = 0;
+        location.reload();
       }
     });
 
     // orientationchange => 모바일 기기의 세로방향, 가로방향을 바꿀 때마다 발생하는 이벤트
     addEventListener("orientationchange", () => {
-      setTimeout(setLayout, 500);
+      scrollTo(0, 0);
+      setTimeout(() => {
+        location.reload();
+      }, 500);
     });
 
     document

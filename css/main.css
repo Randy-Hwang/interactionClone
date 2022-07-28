@@ -278,6 +278,11 @@ body.before-load {
   will-change: transform, opacity;
 }
 
+/* currentScene이 3번을 넘어가면 display:block이 꺼지도록 */
+.scroll-effect-end .sticky-elem {
+  display: none !important;
+}
+
 .sticky-elem-canvas {
   top: 0;
   height: 100%;
@@ -304,4 +309,8 @@ body.before-load {
 .container {
   /* 가로스크롤 방지를 위함 */
   overflow-x: hidden;
+}
+
+.normal-content {
+  margin-bottom: 10rem;
 }
